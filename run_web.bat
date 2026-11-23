@@ -16,5 +16,5 @@ echo Keep this terminal window minimized while using the gesture mouse.
 echo Press F8 anytime on your laptop to toggle control ON/OFF.
 echo Press Ctrl+C in this terminal to shut down the server.
 echo.
-python web_app.py %*
+".venv\Scripts\python.exe" web_app.py %*
 pause

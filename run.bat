@@ -8,5 +8,5 @@ if not exist .venv (
 ) else (
   call .venv\Scripts\activate.bat
 )
-python main.py %*
+".venv\Scripts\python.exe" main.py %*
 pause
