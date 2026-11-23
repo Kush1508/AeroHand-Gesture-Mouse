@@ -83,8 +83,9 @@ class GestureClassifier:
             else:
                 self._together = f["spread"] < c.two_together_max
             return (Gesture.TWO_FINGER if self._together else Gesture.SCROLL), f
-        if ext["index"] and not ext["middle"] and not ext["ring"] and not ext["pinky"]:
-            return Gesture.POINT, f
+        if ext["index"] and not ext["middle"]:
+            if (not ext["ring"] and not ext["pinky"]) or (f["ratios"]["index"] > max(f["ratios"]["middle"], f["ratios"]["ring"]) + 0.20):
+                return Gesture.POINT, f
         return Gesture.OTHER, f
 
 

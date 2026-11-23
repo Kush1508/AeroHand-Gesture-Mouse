@@ -48,6 +48,20 @@ pip install -r requirements.txt
 (or just double-click `run.bat`, which does this and launches the app)
 
 ## Run
+
+### Option 1: Web Dashboard (Recommended)
+Launch the modern local web control panel at `http://localhost:5000`:
+```
+python web_app.py
+```
+*(or double-click `run_web.bat`, or use `start_web_silent.vbs` to run silently in the background)*
+
+- Automatically opens `http://localhost:5000` in your browser.
+- Live video feed with hand landmark overlays and FPS counter.
+- One-click START / PAUSE master switch, sensitivity sliders, and calibration.
+- Once started, you can minimize or switch tabs—control works across **all applications** on your computer.
+
+### Option 2: Desktop OpenCV Preview Window
 ```
 python main.py            # options: --camera 1   --start-enabled
 ```

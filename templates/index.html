@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroHand | The Zero-Mouse Web Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07080b;
+      --surface: #0f1117;
+      --surface-subtle: #141722;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --text: #f3f5f8;
+      --text-muted: #737c8e;
+      --text-dim: #4a5160;
+      --active: #10b981;
+      --active-glow: rgba(16, 185, 129, 0.35);
+      --standby: #f59e0b;
+      --standby-glow: rgba(245, 158, 11, 0.25);
+      --danger: #ef4444;
+      --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(ellipse 60% 40% at 50% -10%, rgba(16, 185, 129, 0.07), transparent 80%),
+        radial-gradient(circle at 50% 100%, rgba(245, 158, 11, 0.03), transparent 70%);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1.5rem;
+      overflow-x: hidden;
+      letter-spacing: -0.01em;
+    }
+
+    /* Minimalist Header */
+    header {
+      width: 100%;
+      max-width: 900px;
+      padding: 2.5rem 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.active {
+      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--active);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.active .status-dot {
+      background: var(--active);
+      box-shadow: 0 0 10px var(--active);
+    }
+
+    /* Main Container */
+    main {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding-bottom: 4rem;
+    }
+
+    /* Zen Hero Card */
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 3.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+
+    /* Monolithic Master Switch */
+    .master-switch {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface-subtle);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      user-select: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .master-switch:hover {
+      border-color: var(--border-hover);
+      transform: scale(1.03);
+    }
+
+    .master-switch.active {
+      border-color: var(--active);
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(15, 17, 23, 0.9) 100%);
+      box-shadow: 0 0 45px var(--active-glow), inset 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+
+    .switch-icon {
+      font-size: 2.2rem;
+      transition: transform 0.3s ease;
+    }
+
+    .switch-state-text {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
+    .hero-title {
+      margin-top: 1.8rem;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    .kbd-tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: #fff;
+    }
+
+    /* Minimal Metric Strip */
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      width: 100%;
+    }
+
+    @media (max-width: 640px) {
+      .metric-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .metric-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .metric-box:hover {
+      border-color: var(--border-hover);
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: #fff;
+    }
+
+    .metric-value.accent {
+      color: var(--active);
+    }
+
+    /* Collapsible Vision Panel */
+    .vision-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease;
+    }
+
+    .vision-header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .vision-header:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .vision-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--text);
+    }
+
+    .vision-stream-wrap {
+      width: 100%;
+      height: 380px;
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vision-stream-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .toggle-stream-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .toggle-stream-btn:hover {
+      color: #fff;
+    }
+
+    /* Minimalist Gestures Grid */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .gestures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .gesture-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .gesture-item:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .gesture-glyph {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .gesture-text h4 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .gesture-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+      line-height: 1.35;
+    }
+
+    /* Minimal Controls Drawer */
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .controls-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .control-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .control-val {
+      font-family: var(--mono);
+      color: var(--active);
+      font-size: 0.85rem;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      transition: transform 0.1s ease;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.65rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-hover);
+    }
+
+    /* Calibrate banner */
+    .calib-indicator {
+      display: none;
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: var(--standby);
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    /* Footer */
+    footer {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      width: 100%;
+      max-width: 900px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimal Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark">⚡</div>
+      <div class="brand-title">AeroHand</div>
+    </div>
+    <div class="status-badge" id="systemStatusBadge">
+      <span class="status-dot"></span>
+      <span id="systemStatusText">STANDBY</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Zen Master Hero -->
+    <div class="hero-card">
+      <button class="master-switch" id="masterSwitch" onclick="toggleEngine()" title="Toggle Mouse Control (Space / F8)">
+        <span class="switch-icon" id="switchIcon">🖐️</span>
+        <span class="switch-state-text" id="switchState">OFF</span>
+      </button>
+
+      <h2 class="hero-title" id="heroHeadline">Hand-Controlled Desktop</h2>
+      <p class="hero-subtitle">
+        Press <span class="kbd-tag">F8</span> or <span class="kbd-tag">Space</span> anywhere to toggle. Once active, your hand controls cursor, clicks, and scrolling across your entire laptop.
+      </p>
+
+      <div class="calib-indicator" id="calibIndicator">
+        <span>🎯 <strong>Calibrating:</strong> Move your hand across your comfortable camera area...</span>
+        <span id="calibTimer" style="font-family: var(--mono); font-weight: 700;">5.0s</span>
+      </div>
+    </div>
+
+    <!-- Metric Strip -->
+    <div class="metric-strip">
+      <div class="metric-box">
+        <span class="metric-label">Gesture</span>
+        <span class="metric-value accent" id="metricGesture">READY</span>
+      </div>
+      <div class="metric-box">
+        <span class="metric-label">Tracking</span>
+        <span class="metric-value" id="metricTracking">CONNECTED</span>
+      </div>
+      <div class="metric-box">
+        <span class="metric-label">FPS</span>
+        <span class="metric-value" id="metricFps">0.0</span>
+      </div>
+      <div class="metric-box">
+        <span class="metric-label">Total Clicks</span>
+        <span class="metric-value" id="metricClicks">0</span>
+      </div>
+    </div>
+
+    <!-- Collapsible Vision Feed -->
+    <div class="vision-card">
+      <div class="vision-header" onclick="toggleVisionFeed()">
+        <div class="vision-title">
+          <span>Camera Vision Stream</span>
+          <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim);">&bull; 21 Skeleton Joints</span>
+        </div>
+        <button class="toggle-stream-btn" type="button">
+          <span id="visionToggleLabel">Hide Stream</span>
+          <span id="visionToggleIcon">▲</span>
+        </button>
+      </div>
+
+      <div class="vision-stream-wrap" id="visionWrap">
+        <img src="/video_feed" id="visionImg" alt="Vision Stream">
+      </div>
+    </div>
+
+    <!-- Gestures Reference -->
+    <div>
+      <div class="section-label">Universal Gestures</div>
+      <div class="gestures-grid">
+        <div class="gesture-item">
+          <div class="gesture-glyph">☝️</div>
+          <div class="gesture-text">
+            <h4>Point to Move</h4>
+            <p>Index finger extended. Knuckle-stabilized 1-Euro smoothing.</p>
+          </div>
+        </div>
+
+        <div class="gesture-item">
+          <div class="gesture-glyph">🤏</div>
+          <div class="gesture-text">
+            <h4>Quick Pinch to Click</h4>
+            <p>Thumb & index tap. Two quick taps for double-click.</p>
+          </div>
+        </div>
+
+        <div class="gesture-item">
+          <div class="gesture-glyph">✊</div>
+          <div class="gesture-text">
+            <h4>Pinch & Hold to Drag</h4>
+            <p>Pinch for 0.35s, then move to drag files, text, or windows.</p>
+          </div>
+        </div>
+
+        <div class="gesture-item">
+          <div class="gesture-glyph">✌️</div>
+          <div class="gesture-text">
+            <h4>Two Together: Right Click</h4>
+            <p>Index and middle fingers pressed together for 0.35s.</p>
+          </div>
+        </div>
+
+        <div class="gesture-item">
+          <div class="gesture-glyph">🖖</div>
+          <div class="gesture-text">
+            <h4>Two Apart (V): Scroll</h4>
+            <p>Index & middle apart in V-shape. Move hand up/down to scroll.</p>
+          </div>
+        </div>
+
+        <div class="gesture-item">
+          <div class="gesture-glyph">✋</div>
+          <div class="gesture-text">
+            <h4>Open Palm: Rest / Freeze</h4>
+            <p>All fingers spread. Instantly releases all buttons and freezes cursor.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimal Controls -->
+    <div>
+      <div class="section-label">Precision Tuning</div>
+      <div class="controls-row">
+        <div class="control-box">
+          <div class="control-head">
+            <span>Cursor Speed</span>
+            <span class="control-val" id="speedVal">1.0x</span>
+          </div>
+          <input type="range" min="0.3" max="2.5" step="0.1" value="1.0" oninput="setSensitivity(this.value)">
+        </div>
+
+        <div class="control-box">
+          <div class="control-head">
+            <span>Jitter Smoothing</span>
+            <span class="control-val" id="smoothVal">8.0</span>
+          </div>
+          <input type="range" min="1.0" max="25.0" step="1.0" value="8.0" oninput="setSmoothing(this.value)">
+        </div>
+      </div>
+
+      <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+        <button class="action-btn" onclick="startCalib()">
+          🎯 Calibrate Hand Reach (<span class="kbd-tag">C</span>)
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    AeroHand Engine &bull; System-Wide Windows Controller &bull; Global Hotkey: <strong>F8</strong> &bull; Emergency Stop: <strong>ESC</strong>
+  </footer>
+
+  <script>
+    let isEnabled = false;
+    let streamVisible = true;
+
+    async function pollStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {
+        // silent retry
+      }
+    }
+
+    function updateUI(data) {
+      isEnabled = data.enabled;
+
+      const sw = document.getElementById('masterSwitch');
+      const swState = document.getElementById('switchState');
+      const badge = document.getElementById('systemStatusBadge');
+      const badgeText = document.getElementById('systemStatusText');
+      const headline = document.getElementById('heroHeadline');
+
+      if (isEnabled) {
+        sw.className = "master-switch active";
+        swState.innerText = "ACTIVE";
+        badge.className = "status-badge active";
+        badgeText.innerText = "MOUSE ACTIVE";
+        headline.innerText = "System-Wide Mouse Active";
+      } else {
+        sw.className = "master-switch";
+        swState.innerText = "OFF";
+        badge.className = "status-badge";
+        badgeText.innerText = "STANDBY";
+        headline.innerText = "Hand-Controlled Desktop";
+      }
+
+      // Metric updates
+      document.getElementById('metricGesture').innerText = data.gesture || "READY";
+      document.getElementById('metricTracking').innerText = data.hand_detected ? "DETECTED" : "SEARCHING";
+      document.getElementById('metricTracking').style.color = data.hand_detected ? "var(--active)" : "var(--text-muted)";
+      document.getElementById('metricFps').innerText = (data.fps || 0).toFixed(0);
+
+      // Audio feedback for registered clicks
+      const totalClicks = ((data.stats?.left || 0) + (data.stats?.right || 0));
+      if (totalClicks > lastTotalClicks && lastTotalClicks > 0) {
+        playClickSound();
+      }
+      lastTotalClicks = totalClicks;
+      document.getElementById('metricClicks').innerText = totalClicks;
+
+      // Calibration indicator
+      const calibBox = document.getElementById('calibIndicator');
+      if (data.calibrating) {
+        calibBox.style.display = "flex";
+        document.getElementById('calibTimer').innerText = (data.calib_remaining || 0).toFixed(1) + "s";
+      } else {
+        calibBox.style.display = "none";
+      }
+    }
+
+    let audioCtx = null;
+    let lastTotalClicks = 0;
+    function playClickSound() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(250, audioCtx.currentTime + 0.03);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.03);
+      } catch(e) {}
+    }
+
+    async function toggleEngine() {
+      try {
+        const res = await fetch('/api/toggle', { method: 'POST' });
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function startCalib() {
+      try {
+        await fetch('/api/calibrate', { method: 'POST' });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function setSensitivity(val) {
+      document.getElementById('speedVal').innerText = parseFloat(val).toFixed(1) + 'x';
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sensitivity: parseFloat(val) })
+        });
+      } catch (err) {}
+    }
+
+    async function setSmoothing(val) {
+      document.getElementById('smoothVal').innerText = parseFloat(val).toFixed(1);
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ smooth_beta: parseFloat(val) })
+        });
+      } catch (err) {}
+    }
+
+    function toggleVisionFeed() {
+      streamVisible = !streamVisible;
+      const wrap = document.getElementById('visionWrap');
+      const img = document.getElementById('visionImg');
+      const label = document.getElementById('visionToggleLabel');
+      const icon = document.getElementById('visionToggleIcon');
+
+      if (streamVisible) {
+        wrap.style.display = "flex";
+        img.src = "/video_feed";
+        label.innerText = "Hide Stream";
+        icon.innerText = "▲";
+      } else {
+        wrap.style.display = "none";
+        img.src = "";
+        label.innerText = "Show Stream";
+        icon.innerText = "▼";
+      }
+    }
+
+    // Spacebar toggle on page
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+        e.preventDefault();
+        toggleEngine();
+      } else if (e.key === 'c' || e.key === 'C') {
+        if (e.target.tagName !== 'INPUT') {
+          startCalib();
+        }
+      }
+    });
+
+    setInterval(pollStatus, 120);
+    pollStatus();
+  </script>
+</body>
+</html>

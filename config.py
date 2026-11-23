@@ -34,10 +34,10 @@ class Config:
     smooth_beta: float = 8.0
     deadzone_px: float = 2.0
 
-    finger_ext_ratio: float = 1.45
+    finger_ext_ratio: float = 1.25
     pinch_on: float = 0.30
     pinch_off: float = 0.45
-    pinch_index_guard: float = 1.10
+    pinch_index_guard: float = 1.05
     two_together_max: float = 0.34
     two_apart_min: float = 0.46
     stable_frames: int = 2

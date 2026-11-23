@@ -47,6 +47,65 @@ class PyAutoBackend:
         self.pg.scroll(int(notches) * SCROLL_UNIT, _pause=False)
 
 
+class WindowsNativeBackend:
+    def __init__(self):
+        import ctypes
+        import ctypes.wintypes
+        self.ctypes = ctypes
+        self.user32 = ctypes.windll.user32
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            try:
+                self.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+        self.w = self.user32.GetSystemMetrics(0)
+        self.h = self.user32.GetSystemMetrics(1)
+        self.MOUSEEVENTF_LEFTDOWN = 0x0002
+        self.MOUSEEVENTF_LEFTUP = 0x0004
+        self.MOUSEEVENTF_RIGHTDOWN = 0x0008
+        self.MOUSEEVENTF_RIGHTUP = 0x0010
+        self.MOUSEEVENTF_WHEEL = 0x0800
+
+    def size(self):
+        return (self.w, self.h)
+
+    def position(self):
+        pt = self.ctypes.wintypes.POINT()
+        self.user32.GetCursorPos(self.ctypes.byref(pt))
+        return (pt.x, pt.y)
+
+    def move(self, x, y):
+        self.user32.SetCursorPos(int(x), int(y))
+
+    def down(self):
+        self.user32.mouse_event(self.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+
+    def up(self):
+        self.user32.mouse_event(self.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
+    def click(self, button="left"):
+        if button == "left":
+            self.user32.mouse_event(self.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+            self.user32.mouse_event(self.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+        elif button == "right":
+            self.user32.mouse_event(self.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+            self.user32.mouse_event(self.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+
+    def scroll(self, notches):
+        self.user32.mouse_event(self.MOUSEEVENTF_WHEEL, 0, 0, int(notches * 120), 0)
+
+
+def default_backend():
+    if sys.platform == "win32":
+        try:
+            return WindowsNativeBackend()
+        except Exception:
+            pass
+    return PyAutoBackend()
+
+
 class OneEuro:
     def __init__(self, min_cutoff, beta, dcutoff=1.0):
         self.min_cutoff, self.beta, self.dcutoff = min_cutoff, beta, dcutoff
@@ -78,7 +137,7 @@ class OneEuro:
 class MouseController:
     def __init__(self, cfg, backend=None):
         self.cfg = cfg
-        self.backend = backend or PyAutoBackend()
+        self.backend = backend or default_backend()
         self.screen_w, self.screen_h = self.backend.size()
         self.fx = OneEuro(cfg.smooth_min_cutoff, cfg.smooth_beta)
         self.fy = OneEuro(cfg.smooth_min_cutoff, cfg.smooth_beta)
